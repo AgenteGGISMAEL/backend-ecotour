@@ -1,17 +1,28 @@
-# Usa una imagen de OpenJDK 17
+# Usa una imagen base con JDK 17
 FROM openjdk:17-jdk-slim
 
-# Crea el directorio de la aplicación dentro del contenedor
+# Instala Maven
+RUN apt-get update && apt-get install -y maven
+
+# Define el directorio de trabajo
 WORKDIR /app
 
-# Copia los archivos del proyecto al contenedor
-COPY . .
+# Copia el archivo pom.xml y las dependencias a la imagen
+COPY pom.xml ./
 
-# Construye el backend con Maven
-RUN ./mvnw clean install
+# Usa Maven para descargar las dependencias en modo offline
+RUN mvn dependency:go-offline
 
-# Expone el puerto 8080
+# Copia el código fuente al contenedor
+COPY src ./src
+
+# Construye el JAR usando Maven
+RUN mvn clean package -DskipTests
+
+# Expon el puerto 8080 para la aplicación
 EXPOSE 8080
 
-# Ejecuta la aplicación
-CMD ["java", "-jar", "target/*.jar"]
+# Comando para ejecutar la aplicación
+CMD ["java", "-jar", "target/backend-ecotour.jar"]
+
+
